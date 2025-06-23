@@ -1,0 +1,10 @@
+.venv
+*.pyo
+.DS_Store
+.env
+.git
+.gitignore
+venv
+.dockerignore
+Dockerfile
+README.md

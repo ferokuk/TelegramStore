@@ -1,0 +1,33 @@
+version: "4.40"
+services:
+  db:
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    image: postgres:15
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  web:
+    build: .
+    entrypoint: [ "/app/entrypoint.sh" ]
+    command: gunicorn TelegramStore.wsgi:application --bind 0.0.0.0:8000 --workers 3 --keep-alive 30 --timeout 60
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+

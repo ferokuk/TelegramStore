@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    env_file: .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+  django:
+    build:
+      context: ./backend
+    entrypoint: ["sh", "/app/backend/entrypoint.sh"]
+    command: uvicorn TelegramStore.asgi:application --host 0.0.0.0 --port 8000 --workers 3 --lifespan off
+    volumes:
+      - ./backend:/app/backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - db
+
+  bot:
+    build:
+      context: ./bot
+    command: watchfiles --ignore-paths /django_app --filter python 'python -m src.main' /app
+    env_file: .env
+    volumes:
+      - ./bot:/app
+      - ./backend:/django_app
+    depends_on:
+      - db
+      - django
+
+#  redis:
+#    image: redis:7-alpine
+#    ports:
+#      - "6379:6379"
+#    volumes:
+#      - redis_data:/data
+#    command: redis-server --save 60 1 --loglevel warning
+
+volumes:
+  postgres_data:
+  redis_data:
+
